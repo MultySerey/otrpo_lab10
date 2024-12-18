@@ -1,59 +1,58 @@
 import psutil
 import time
-from prometheus_client import (
-    CollectorRegistry,
-    Gauge,
-    push_to_gateway
-)
+from prometheus_client import Gauge, start_http_server
 
-registry = CollectorRegistry()
-
+# Создание метрик
 cpu_usage = Gauge(
     'system_cpu_usage',
-    'Процент использования ЦПУ',
-    registry=registry
+    'Процент использования ядер процессора',
+    ['core']
 )
-mem_total = Gauge(
-    'system_mem_total',
-    'Общее количество оперативной памяти',
-    registry=registry
+mem_info = Gauge(
+    'system_memory',
+    'Память: всего и используемая (ГБ)',
+    ['type']
 )
-mem_used = Gauge(
-    'system_mem_used',
-    'Используемое количество оперативной памяти',
-    registry=registry
-)
-disk_total = Gauge(
-    'system_disk_total',
-    'Объем диска',
-    registry=registry
-)
-disk_used = Gauge(
-    'system_disk_used',
-    'Используемый объем диска',
-    registry=registry
+
+disk_info = Gauge(
+    'system_disk',
+    'Диски: общий объем и использованное пространство (ГБ)',
+    ['disk', 'type']
 )
 
 
 def collect_system_metrics():
-    cpu_usage.set(psutil.cpu_percent())
+    # Сбор метрик по каждому ядру процессора
+    for i, percent in enumerate(psutil.cpu_percent(percpu=True)):
+        cpu_usage.labels(core=f'core_{i}').set(percent)
 
     mem = psutil.virtual_memory()
-    mem_total.set(mem.total / 1024 / 1024 / 1024)
-    mem_used.set(mem.used / 1024 / 1024 / 1024)
+    mem_info.labels(type='total').set(mem.total / 1024 / 1024 / 1024)
+    mem_info.labels(type='used').set(mem.used / 1024 / 1024 / 1024)
 
-    disk = psutil.disk_usage('/')
-    disk_total.set(disk.total / 1024 / 1024 / 1024)
-    disk_used.set(disk.used / 1024 / 1024 / 1024)
+    partitions = psutil.disk_partitions()
+    for partition in partitions:
+        try:
+            usage = psutil.disk_usage(partition.mountpoint)
+            disk_info.labels(disk=partition.device, type='total').set(usage.total / 1024 / 1024 / 1024)
+            disk_info.labels(disk=partition.device, type='used').set(usage.used / 1024 / 1024 / 1024)
+        except PermissionError:
+            # Игнорируем диски, к которым нет доступа
+            continue
 
 
 def main():
-    pushgateway_url = "localhost:9090"  # URL сервера PushGateway
-    job_name = "system_metrics"  # Имя задачи
+    # Чтение переменных окружения
+    host = "0.0.0.0"
+    port = 9091
 
+    # Запуск HTTP-сервера
+    start_http_server(9091)
+    print(f"Экспортер запущен на {host}:{port}")
+
+    # Сбор метрик
     while True:
-        collect_system_metrics()  # Сбор метрик каждую секунду
-        push_to_gateway(pushgateway_url, job=job_name, registry=registry)
+        collect_system_metrics()
         time.sleep(1)
 
 
