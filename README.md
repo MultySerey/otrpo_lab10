@@ -5,19 +5,20 @@
 - psutil
 - prometheus-client
 ## Использование
-1. Создаём Virtual Env
+1. Переименуйте `.env.example` в `.env` и заполните все поля.
+2. Создаём Virtual Env
 ```shell
 python -m venv .venv
 ```
-2. Активируем Virtual Env
+3. Активируем Virtual Env
 ```shell
 .venv\Scripts\Activate
 ```
-3. Устанавливаем необходимые библиотеки
+4. Устанавливаем необходимые библиотеки
 ```shell
 pip install -r requirements.txt
 ```
-4. Запускаем экспортер
+5. Запускаем экспортер
 ```shell
 python main.py
 ```

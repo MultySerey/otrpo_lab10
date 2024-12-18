@@ -1,6 +1,9 @@
 import psutil
 import time
 from prometheus_client import Gauge, start_http_server
+from dotenv import dotenv_values
+
+CONFIG = dotenv_values()
 
 # Создание метрик
 cpu_usage = Gauge(
@@ -43,11 +46,11 @@ def collect_system_metrics():
 
 def main():
     # Чтение переменных окружения
-    host = "0.0.0.0"
-    port = 9091
+    host = CONFIG["EXPORTER_HOST"]
+    port = int(CONFIG["EXPORTER_PORT"])
 
     # Запуск HTTP-сервера
-    start_http_server(9091)
+    start_http_server(port=port, addr=host)
     print(f"Экспортер запущен на {host}:{port}")
 
     # Сбор метрик
