@@ -4,6 +4,7 @@
 ## Использованные библиотеки
 - psutil
 - prometheus-client
+- python-dotenv
 ## Использование
 1. Переименуйте `.env.example` в `.env` и заполните все поля.
 2. Создаём Virtual Env
