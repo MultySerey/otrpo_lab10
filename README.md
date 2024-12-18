@@ -21,7 +21,7 @@ pip install -r requirements.txt
 ```shell
 python main.py
 ```
-## Запросы
+## Запросы PromQL
 ### Запрос для вывода загрузки всех ядре процессора
 ```promql
 system_cpu_usage
